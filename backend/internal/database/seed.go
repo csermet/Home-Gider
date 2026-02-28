@@ -59,14 +59,15 @@ func seedCategories(db *gorm.DB) {
 	}
 
 	categories := []models.Category{
+		{Name: "Kira", Icon: "building"},
 		{Name: "Fatura", Icon: "receipt"},
 		{Name: "Market", Icon: "shopping-cart"},
-		{Name: "Yemek", Icon: "utensils"},
-		{Name: "Ulaşım", Icon: "car"},
+		{Name: "Ev", Icon: "home"},
 		{Name: "Eğlence", Icon: "gamepad"},
+		{Name: "Ulaşım", Icon: "car"},
 		{Name: "Sağlık", Icon: "heart-pulse"},
 		{Name: "Giyim", Icon: "shirt"},
-		{Name: "Ev", Icon: "home"},
+		{Name: "Yemek", Icon: "utensils"},
 		{Name: "Diğer", Icon: "ellipsis"},
 	}
 
