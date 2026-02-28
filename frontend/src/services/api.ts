@@ -93,8 +93,8 @@ export const rejectRecurring = (id: number) =>
   api.post(`/recurring/${id}/reject`);
 
 // Summary & Payments
-export const getSummary = (month: number, year: number) =>
-  api.get<MonthlySummary>('/summary', { params: { month, year } });
+export const getSummary = (month: number, year: number, sharedOnly?: boolean) =>
+  api.get<MonthlySummary>('/summary', { params: { month, year, ...(sharedOnly && { shared_only: 'true' }) } });
 
 export const getPayments = (month: number, year: number) =>
   api.get<Payment[]>('/payments', { params: { month, year } });

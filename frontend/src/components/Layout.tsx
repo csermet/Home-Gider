@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Receipt, Repeat, Handshake, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Receipt, Repeat, Handshake, LogOut, Shield } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/overview', label: 'Genel Bakış', icon: BarChart3 },
   { to: '/expenses', label: 'Giderler', icon: Receipt },
   { to: '/recurring', label: 'Sabit/Taksit', icon: Repeat },
   { to: '/settlement', label: 'Hesaplaşma', icon: Handshake },

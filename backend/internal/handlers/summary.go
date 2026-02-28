@@ -28,7 +28,9 @@ func (h *SummaryHandler) GetSummary(c echo.Context) error {
 		year = now.Year()
 	}
 
-	summary, err := h.service.GetMonthlySummary(month, year)
+	sharedOnly := c.QueryParam("shared_only") == "true"
+
+	summary, err := h.service.GetMonthlySummary(month, year, sharedOnly)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Özet hesaplanamadı"})
 	}

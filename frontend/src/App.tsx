@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ExpensesPage from './pages/ExpensesPage';
 import RecurringPage from './pages/RecurringPage';
 import SettlementPage from './pages/SettlementPage';
+import OverviewPage from './pages/OverviewPage';
 import AdminPage from './pages/AdminPage';
 
 function ProtectedRoutes() {
@@ -31,6 +32,7 @@ function ProtectedRoutes() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DashboardPage />} />
+        <Route path="overview" element={<OverviewPage />} />
         <Route path="expenses" element={<ExpensesPage />} />
         <Route path="recurring" element={<RecurringPage />} />
         <Route path="settlement" element={<SettlementPage />} />

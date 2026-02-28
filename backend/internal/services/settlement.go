@@ -45,12 +45,15 @@ type CategorySum struct {
 	Total        float64 `json:"total"`
 }
 
-func (s *SettlementService) GetMonthlySummary(month, year int) (*MonthlySummary, error) {
+func (s *SettlementService) GetMonthlySummary(month, year int, sharedOnly bool) (*MonthlySummary, error) {
 	var expenses []models.Expense
-	err := s.db.Preload("Creator").Preload("Category").
+	query := s.db.Preload("Creator").Preload("Category").
 		Where("expense_month = ? AND expense_year = ? AND status = ?",
-			month, year, models.StatusApproved).
-		Find(&expenses).Error
+			month, year, models.StatusApproved)
+	if sharedOnly {
+		query = query.Where("is_shared = ?", true)
+	}
+	err := query.Find(&expenses).Error
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +173,7 @@ func (s *SettlementService) GetPayments(month, year int) ([]models.Payment, erro
 
 func (s *SettlementService) AddPayment(month, year int, payerID, payeeID uint, amount float64) error {
 	// Borç miktarını hesapla
-	summary, err := s.GetMonthlySummary(month, year)
+	summary, err := s.GetMonthlySummary(month, year, true)
 	if err != nil {
 		return err
 	}

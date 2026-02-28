@@ -5,12 +5,12 @@ import type { MonthlySummary, Expense } from '../types';
 import { useAuth } from '../context/AuthContext';
 import MonthSelector from '../components/MonthSelector';
 import StatusBadge from '../components/StatusBadge';
-import { TrendingUp, TrendingDown, Wallet, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, type PieLabelRenderProps } from 'recharts';
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6b7280'];
 
-export default function DashboardPage() {
+export default function OverviewPage() {
   const { user } = useAuth();
   const now = new Date();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,25 +30,16 @@ export default function DashboardPage() {
     setSearchParams({ month: String(month), year: String(year) }, { replace: true });
     setLoading(true);
     Promise.all([
-      getSummary(month, year, true),
+      getSummary(month, year),
       getExpenses(month, year),
     ]).then(([sumRes, expRes]) => {
       setSummary(sumRes.data);
-      setPendingExpenses(expRes.data.filter((e) => e.status === 'pending' && e.is_shared));
+      setPendingExpenses(expRes.data.filter((e) => e.status === 'pending'));
     }).finally(() => setLoading(false));
   }, [month, year]);
 
   const myBalance = summary?.user_summaries.find((u) => u.user_id === user?.id);
   const otherBalance = summary?.user_summaries.find((u) => u.user_id !== user?.id);
-
-  const debtLabel = () => {
-    if (!summary || summary.debt_amount === 0) return null;
-    const debtor = summary.user_summaries.find((u) => u.user_id === summary.debtor_id);
-    const creditor = summary.user_summaries.find((u) => u.user_id === summary.creditor_id);
-    if (!debtor || !creditor) return null;
-    return { debtor: debtor.display_name, creditor: creditor.display_name, amount: summary.debt_amount };
-  };
-  const debt = debtLabel();
 
   const chartData = summary?.category_breakdown.map((c, i) => ({
     name: c.category_name,
@@ -63,7 +54,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Genel Bakış</h2>
         <MonthSelector month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
       </div>
 
@@ -96,35 +87,6 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-400 mt-1">Pay: {otherBalance?.total_share.toLocaleString('tr-TR')} TL</p>
         </div>
       </div>
-
-      {/* Borç Durumu */}
-      {debt && (
-        <div className={`bg-gradient-to-r ${summary!.remaining_debt === 0 ? 'from-green-500 to-green-600' : 'from-blue-500 to-blue-600'} rounded-xl p-6 text-white shadow-md`}>
-          <div className="flex items-center justify-center gap-3 text-lg">
-            <span className="font-semibold">{debt.debtor}</span>
-            <ArrowRight size={24} />
-            <span className="font-semibold">{debt.creditor}</span>
-          </div>
-          {summary!.remaining_debt > 0 ? (
-            <>
-              <p className="text-center text-3xl font-bold mt-2">{summary!.remaining_debt.toLocaleString('tr-TR')} TL</p>
-              <p className="text-center text-blue-100 text-sm mt-1">
-                kalan borç{summary!.total_payments > 0 ? ` (toplam ${debt.amount.toLocaleString('tr-TR')} TL, ${summary!.total_payments.toLocaleString('tr-TR')} TL ödendi)` : ''}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-center text-3xl font-bold mt-2">Borç Ödendi!</p>
-              <p className="text-center text-green-100 text-sm mt-1">{debt.amount.toLocaleString('tr-TR')} TL tamamen ödendi</p>
-            </>
-          )}
-        </div>
-      )}
-      {summary && summary.debt_amount === 0 && summary.total_expenses > 0 && (
-        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white shadow-md text-center">
-          <p className="text-xl font-bold">Eşit! Borç yok</p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Kategori Dağılımı */}
@@ -164,7 +126,10 @@ export default function DashboardPage() {
                 <div key={e.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div>
                     <p className="text-sm font-medium text-slate-700">{e.description}</p>
-                    <p className="text-xs text-slate-400">{e.creator.display_name} - {e.category.name}</p>
+                    <p className="text-xs text-slate-400">
+                      {e.creator.display_name} - {e.category.name}
+                      {!e.is_shared && <span className="ml-1 text-orange-500 font-medium">Kişisel</span>}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-slate-800">{e.amount.toLocaleString('tr-TR')} TL</p>
