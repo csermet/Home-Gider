@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { getExpenses, getCategories, createExpense, approveExpense, rejectExpense, deleteExpense } from '../services/api';
+import { getExpenses, getCategories, createExpense, approveExpense, rejectExpense, deleteExpense, confirmDeleteExpense, cancelDeleteExpense } from '../services/api';
 import type { Expense, Category } from '../types';
 import { useAuth } from '../context/AuthContext';
 import MonthSelector from '../components/MonthSelector';
 import StatusBadge from '../components/StatusBadge';
 import { Plus, Check, X, Trash2 } from 'lucide-react';
+
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export default function ExpensesPage() {
   const { user } = useAuth();
@@ -22,7 +26,7 @@ export default function ExpensesPage() {
     category_id: 0,
     description: '',
     amount: '',
-    expense_date: new Date().toISOString().split('T')[0],
+    expense_date: localDateStr(),
     is_shared: true,
     split_ratio: '50',
   });
@@ -53,7 +57,7 @@ export default function ExpensesPage() {
       is_shared: form.is_shared,
       split_ratio: parseFloat(form.split_ratio),
     });
-    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', expense_date: new Date().toISOString().split('T')[0], is_shared: true, split_ratio: '50' });
+    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', expense_date: localDateStr(), is_shared: true, split_ratio: '50' });
     setShowForm(false);
     loadData();
   };
@@ -69,8 +73,19 @@ export default function ExpensesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Bu gideri silmek istediğinize emin misiniz?')) return;
+    if (!confirm('Bu gider için silme talebi oluşturulsun mu?')) return;
     await deleteExpense(id);
+    loadData();
+  };
+
+  const handleConfirmDelete = async (id: number) => {
+    if (!confirm('Bu gideri silmeyi onaylıyor musunuz?')) return;
+    await confirmDeleteExpense(id);
+    loadData();
+  };
+
+  const handleCancelDelete = async (id: number) => {
+    await cancelDeleteExpense(id);
     loadData();
   };
 
@@ -248,8 +263,14 @@ export default function ExpensesPage() {
                 <div className="text-right mr-2">
                   <p className="font-semibold text-slate-800">{expense.amount.toLocaleString('tr-TR')} TL</p>
                   <StatusBadge status={expense.status} />
+                  {expense.delete_requested_by && (
+                    <span className="block text-xs text-red-500 font-medium mt-0.5">
+                      Silme Talebi ({expense.delete_requester?.display_name})
+                    </span>
+                  )}
                 </div>
-                {expense.status === 'pending' && (user?.is_admin || expense.created_by !== user?.id) && (
+                {/* Gider onay/ret butonları */}
+                {expense.status === 'pending' && !expense.delete_requested_by && (user?.is_admin || expense.created_by !== user?.id) && (
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleApprove(expense.id)}
@@ -267,11 +288,41 @@ export default function ExpensesPage() {
                     </button>
                   </div>
                 )}
-                {expense.status === 'pending' && expense.created_by === user?.id && (
+                {/* Silme onay: karşı taraf onaylar */}
+                {expense.delete_requested_by && expense.delete_requested_by !== user?.id && (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleConfirmDelete(expense.id)}
+                      className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 cursor-pointer"
+                      title="Silmeyi Onayla"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleCancelDelete(expense.id)}
+                      className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 cursor-pointer"
+                      title="Silmeyi Reddet"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+                {/* Silme talebi iptal: talep eden iptal edebilir */}
+                {expense.delete_requested_by && expense.delete_requested_by === user?.id && (
+                  <button
+                    onClick={() => handleCancelDelete(expense.id)}
+                    className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 cursor-pointer"
+                    title="Silme Talebini İptal Et"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+                {/* Silme talep et: silme talebi yoksa herkes talep edebilir */}
+                {!expense.delete_requested_by && (
                   <button
                     onClick={() => handleDelete(expense.id)}
                     className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-red-100 hover:text-red-600 cursor-pointer"
-                    title="Sil"
+                    title="Silme Talebi"
                   >
                     <Trash2 size={16} />
                   </button>

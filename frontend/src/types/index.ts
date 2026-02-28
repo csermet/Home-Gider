@@ -36,6 +36,8 @@ export interface Expense {
   approved_by: number | null;
   approver: User | null;
   approved_at: string | null;
+  delete_requested_by: number | null;
+  delete_requester: User | null;
   created_at: string;
 }
 

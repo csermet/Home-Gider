@@ -61,6 +61,12 @@ export const approveExpense = (id: number) =>
 export const rejectExpense = (id: number) =>
   api.post<Expense>(`/expenses/${id}/reject`);
 
+export const confirmDeleteExpense = (id: number) =>
+  api.post(`/expenses/${id}/confirm-delete`);
+
+export const cancelDeleteExpense = (id: number) =>
+  api.post<Expense>(`/expenses/${id}/cancel-delete`);
+
 // Recurring
 export const getRecurring = () =>
   api.get<RecurringExpense[]>('/recurring');

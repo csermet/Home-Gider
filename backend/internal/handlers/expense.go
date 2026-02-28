@@ -107,11 +107,45 @@ func (h *ExpenseHandler) Delete(c echo.Context) error {
 	}
 
 	userID := c.Get("user_id").(uint)
-	if err := h.service.Delete(uint(id), userID); err != nil {
+	isAdmin, _ := c.Get("is_admin").(bool)
+	if err := h.service.Delete(uint(id), userID, isAdmin); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	if isAdmin {
+		return c.JSON(http.StatusOK, map[string]string{"message": "Gider silindi"})
+	}
+	updated, _ := h.service.GetByID(uint(id))
+	return c.JSON(http.StatusOK, updated)
+}
+
+func (h *ExpenseHandler) ConfirmDelete(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Geçersiz ID"})
+	}
+
+	userID := c.Get("user_id").(uint)
+	if err := h.service.ConfirmDelete(uint(id), userID); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Gider silindi"})
+}
+
+func (h *ExpenseHandler) CancelDelete(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Geçersiz ID"})
+	}
+
+	userID := c.Get("user_id").(uint)
+	if err := h.service.CancelDelete(uint(id), userID); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	updated, _ := h.service.GetByID(uint(id))
+	return c.JSON(http.StatusOK, updated)
 }
 
 func (h *ExpenseHandler) Approve(c echo.Context) error {

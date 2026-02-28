@@ -120,6 +120,8 @@ func main() {
 	auth.DELETE("/expenses/:id", expenseHandler.Delete)
 	auth.POST("/expenses/:id/approve", expenseHandler.Approve)
 	auth.POST("/expenses/:id/reject", expenseHandler.Reject)
+	auth.POST("/expenses/:id/confirm-delete", expenseHandler.ConfirmDelete)
+	auth.POST("/expenses/:id/cancel-delete", expenseHandler.CancelDelete)
 
 	// Sabit/Taksitli Giderler
 	auth.GET("/recurring", recurringHandler.List)

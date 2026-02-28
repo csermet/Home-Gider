@@ -22,6 +22,7 @@ func (s *ExpenseService) List(month, year int) ([]models.Expense, error) {
 		Preload("Creator").
 		Preload("Category").
 		Preload("Approver").
+		Preload("DeleteRequester").
 		Where("expense_month = ? AND expense_year = ?", month, year).
 		Order("expense_date DESC, created_at DESC").
 		Find(&expenses).Error
@@ -53,18 +54,48 @@ func (s *ExpenseService) Update(id, userID uint, updates map[string]interface{})
 	return s.db.Model(&expense).Updates(updates).Error
 }
 
-func (s *ExpenseService) Delete(id, userID uint) error {
+func (s *ExpenseService) Delete(id, userID uint, isAdmin bool) error {
 	var expense models.Expense
 	if err := s.db.First(&expense, id).Error; err != nil {
 		return err
 	}
-	if expense.CreatedBy != userID {
-		return errors.New("sadece kendi eklediğiniz giderleri silebilirsiniz")
+	// Admin direkt silebilir
+	if isAdmin {
+		return s.db.Delete(&expense).Error
 	}
-	if expense.Status != models.StatusPending {
-		return errors.New("sadece onay bekleyen giderler silinebilir")
+	// Normal kullanıcı: silme talep et
+	if expense.DeleteRequestedBy != nil {
+		return errors.New("bu gider için zaten silme talebi var")
+	}
+	return s.db.Model(&expense).Update("delete_requested_by", userID).Error
+}
+
+func (s *ExpenseService) ConfirmDelete(id, userID uint) error {
+	var expense models.Expense
+	if err := s.db.First(&expense, id).Error; err != nil {
+		return err
+	}
+	if expense.DeleteRequestedBy == nil {
+		return errors.New("bu gider için silme talebi yok")
+	}
+	if *expense.DeleteRequestedBy == userID {
+		return errors.New("kendi silme talebinizi onaylayamazsınız")
 	}
 	return s.db.Delete(&expense).Error
+}
+
+func (s *ExpenseService) CancelDelete(id, userID uint) error {
+	var expense models.Expense
+	if err := s.db.First(&expense, id).Error; err != nil {
+		return err
+	}
+	if expense.DeleteRequestedBy == nil {
+		return errors.New("bu gider için silme talebi yok")
+	}
+	if *expense.DeleteRequestedBy != userID {
+		return errors.New("sadece talebi oluşturan kişi iptal edebilir")
+	}
+	return s.db.Model(&expense).Update("delete_requested_by", nil).Error
 }
 
 func (s *ExpenseService) Approve(id, approverID uint, isAdmin bool) error {
@@ -102,6 +133,6 @@ func (s *ExpenseService) Reject(id, userID uint, isAdmin bool) error {
 
 func (s *ExpenseService) GetByID(id uint) (*models.Expense, error) {
 	var expense models.Expense
-	err := s.db.Preload("Creator").Preload("Category").Preload("Approver").First(&expense, id).Error
+	err := s.db.Preload("Creator").Preload("Category").Preload("Approver").Preload("DeleteRequester").First(&expense, id).Error
 	return &expense, err
 }

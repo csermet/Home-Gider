@@ -31,5 +31,7 @@ type Expense struct {
 	ApprovedBy         *uint         `json:"approved_by"`
 	Approver           *User         `json:"approver,omitempty" gorm:"foreignKey:ApprovedBy"`
 	ApprovedAt         *time.Time    `json:"approved_at"`
+	DeleteRequestedBy  *uint         `json:"delete_requested_by"`
+	DeleteRequester    *User         `json:"delete_requester,omitempty" gorm:"foreignKey:DeleteRequestedBy"`
 	CreatedAt          time.Time     `json:"created_at"`
 }
