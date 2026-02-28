@@ -20,14 +20,14 @@ func seedUsers(db *gorm.DB) {
 		return
 	}
 
-	// Admin kullanıcı — şifre sabit, değiştirmesine gerek yok
-	adminHash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	// Admin kullanıcı — ilk girişte şifre belirleyecek
+	adminHash, _ := bcrypt.GenerateFromPassword([]byte("temp"), bcrypt.DefaultCost)
 	db.Create(&models.User{
 		Username:           "admin",
 		PasswordHash:       string(adminHash),
 		DisplayName:        "Admin",
 		IsAdmin:            true,
-		MustChangePassword: false,
+		MustChangePassword: true,
 	})
 
 	// CNR ve CNS — ilk girişte şifre belirleyecekler

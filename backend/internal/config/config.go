@@ -19,7 +19,7 @@ func Load() *Config {
 		DBUser:     getEnv("DB_USER", "gider"),
 		DBPassword: getEnv("DB_PASSWORD", "gider123"),
 		DBName:     getEnv("DB_NAME", "gider_db"),
-		JWTSecret:  getEnv("JWT_SECRET", "super-secret-key-change-in-production"),
+		JWTSecret:  getEnv("JWT_SECRET", "replace-with-secure-secret"),
 		Port:       getEnv("PORT", "3000"),
 	}
 }
