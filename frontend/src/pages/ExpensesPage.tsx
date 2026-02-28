@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getExpenses, getCategories, createExpense, approveExpense, rejectExpense, deleteExpense, confirmDeleteExpense, cancelDeleteExpense } from '../services/api';
 import type { Expense, Category } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -6,15 +7,28 @@ import MonthSelector from '../components/MonthSelector';
 import StatusBadge from '../components/StatusBadge';
 import { Plus, Check, X, Trash2 } from 'lucide-react';
 
-function localDateStr(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function localDateStr(m?: number, y?: number) {
+  const now = new Date();
+  const year = y ?? now.getFullYear();
+  const month = m ?? (now.getMonth() + 1);
+  // Eğer seçili ay bu ay ise bugünün gününü kullan, değilse ayın 1'i
+  const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
+  const day = isCurrentMonth ? now.getDate() : 1;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 export default function ExpensesPage() {
   const { user } = useAuth();
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const p = parseInt(searchParams.get('month') || '');
+    return p >= 1 && p <= 12 ? p : now.getMonth() + 1;
+  });
+  const [year, setYear] = useState(() => {
+    const p = parseInt(searchParams.get('year') || '');
+    return p >= 2020 ? p : now.getFullYear();
+  });
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -26,7 +40,7 @@ export default function ExpensesPage() {
     category_id: 0,
     description: '',
     amount: '',
-    expense_date: localDateStr(),
+    expense_date: localDateStr(month, year),
     is_shared: true,
     split_ratio: '50',
   });
@@ -45,7 +59,10 @@ export default function ExpensesPage() {
     }).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadData(); }, [month, year]);
+  useEffect(() => {
+    setSearchParams({ month: String(month), year: String(year) }, { replace: true });
+    loadData();
+  }, [month, year]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +74,7 @@ export default function ExpensesPage() {
       is_shared: form.is_shared,
       split_ratio: parseFloat(form.split_ratio),
     });
-    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', expense_date: localDateStr(), is_shared: true, split_ratio: '50' });
+    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', expense_date: localDateStr(month, year), is_shared: true, split_ratio: '50' });
     setShowForm(false);
     loadData();
   };

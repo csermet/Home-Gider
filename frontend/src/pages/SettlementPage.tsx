@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getSummary, getPayments, addPayment, deletePayment } from '../services/api';
 import type { MonthlySummary, Payment } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -8,8 +9,15 @@ import { ArrowRight, CheckCircle, CircleDollarSign, Plus, Trash2 } from 'lucide-
 export default function SettlementPage() {
   const { user } = useAuth();
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const p = parseInt(searchParams.get('month') || '');
+    return p >= 1 && p <= 12 ? p : now.getMonth() + 1;
+  });
+  const [year, setYear] = useState(() => {
+    const p = parseInt(searchParams.get('year') || '');
+    return p >= 2020 ? p : now.getFullYear();
+  });
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +35,10 @@ export default function SettlementPage() {
     }).finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadData(); }, [month, year]);
+  useEffect(() => {
+    setSearchParams({ month: String(month), year: String(year) }, { replace: true });
+    loadData();
+  }, [month, year]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();

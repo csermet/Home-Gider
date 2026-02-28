@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getSummary, getExpenses } from '../services/api';
 import type { MonthlySummary, Expense } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -12,13 +13,21 @@ const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'
 export default function DashboardPage() {
   const { user } = useAuth();
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const p = parseInt(searchParams.get('month') || '');
+    return p >= 1 && p <= 12 ? p : now.getMonth() + 1;
+  });
+  const [year, setYear] = useState(() => {
+    const p = parseInt(searchParams.get('year') || '');
+    return p >= 2020 ? p : now.getFullYear();
+  });
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [pendingExpenses, setPendingExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setSearchParams({ month: String(month), year: String(year) }, { replace: true });
     setLoading(true);
     Promise.all([
       getSummary(month, year),
