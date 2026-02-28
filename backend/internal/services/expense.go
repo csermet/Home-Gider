@@ -92,9 +92,7 @@ func (s *ExpenseService) CancelDelete(id, userID uint) error {
 	if expense.DeleteRequestedBy == nil {
 		return errors.New("bu gider için silme talebi yok")
 	}
-	if *expense.DeleteRequestedBy != userID {
-		return errors.New("sadece talebi oluşturan kişi iptal edebilir")
-	}
+	// Hem talep eden hem karşı taraf iptal/reddet yapabilir
 	return s.db.Model(&expense).Update("delete_requested_by", nil).Error
 }
 
