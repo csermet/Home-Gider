@@ -24,15 +24,12 @@ func (s *ExpenseService) List(month, year int) ([]models.Expense, error) {
 		Preload("Approver").
 		Preload("DeleteRequester").
 		Where("expense_month = ? AND expense_year = ?", month, year).
-		Order("expense_date DESC, created_at DESC").
+		Order("created_at DESC").
 		Find(&expenses).Error
 	return expenses, err
 }
 
 func (s *ExpenseService) Create(expense *models.Expense) error {
-	expense.ExpenseMonth = int(expense.ExpenseDate.Month())
-	expense.ExpenseYear = expense.ExpenseDate.Year()
-
 	if !expense.IsShared {
 		expense.Status = models.StatusApproved
 	}

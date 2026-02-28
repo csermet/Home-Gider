@@ -44,7 +44,8 @@ export const createExpense = (data: {
   category_id: number;
   description: string;
   amount: number;
-  expense_date: string;
+  month: number;
+  year: number;
   is_shared: boolean;
   split_ratio: number;
 }) => api.post<Expense>('/expenses', data);

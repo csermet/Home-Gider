@@ -19,12 +19,13 @@ func NewExpenseHandler(service *services.ExpenseService) *ExpenseHandler {
 }
 
 type CreateExpenseRequest struct {
-	CategoryID    uint    `json:"category_id"`
-	Description   string  `json:"description"`
-	Amount        float64 `json:"amount"`
-	ExpenseDate   string  `json:"expense_date"`
-	IsShared      bool    `json:"is_shared"`
-	SplitRatio    float64 `json:"split_ratio"`
+	CategoryID uint    `json:"category_id"`
+	Description string `json:"description"`
+	Amount      float64 `json:"amount"`
+	Month       int     `json:"month"`
+	Year        int     `json:"year"`
+	IsShared    bool    `json:"is_shared"`
+	SplitRatio  float64 `json:"split_ratio"`
 }
 
 func (h *ExpenseHandler) List(c echo.Context) error {
@@ -53,9 +54,14 @@ func (h *ExpenseHandler) Create(c echo.Context) error {
 
 	userID := c.Get("user_id").(uint)
 
-	date, err := time.Parse("2006-01-02", req.ExpenseDate)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Geçersiz tarih formatı (YYYY-MM-DD)"})
+	if req.Month == 0 || req.Year == 0 {
+		now := time.Now()
+		if req.Month == 0 {
+			req.Month = int(now.Month())
+		}
+		if req.Year == 0 {
+			req.Year = now.Year()
+		}
 	}
 
 	if req.SplitRatio == 0 {
@@ -63,13 +69,15 @@ func (h *ExpenseHandler) Create(c echo.Context) error {
 	}
 
 	expense := &models.Expense{
-		CreatedBy:   userID,
-		CategoryID:  req.CategoryID,
-		Description: req.Description,
-		Amount:      req.Amount,
-		ExpenseDate: date,
-		IsShared:    req.IsShared,
-		SplitRatio:  req.SplitRatio,
+		CreatedBy:    userID,
+		CategoryID:   req.CategoryID,
+		Description:  req.Description,
+		Amount:       req.Amount,
+		ExpenseDate:  time.Date(req.Year, time.Month(req.Month), 1, 0, 0, 0, 0, time.Local),
+		ExpenseMonth: req.Month,
+		ExpenseYear:  req.Year,
+		IsShared:     req.IsShared,
+		SplitRatio:   req.SplitRatio,
 	}
 
 	if err := h.service.Create(expense); err != nil {

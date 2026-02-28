@@ -7,16 +7,6 @@ import MonthSelector from '../components/MonthSelector';
 import StatusBadge from '../components/StatusBadge';
 import { Plus, Check, X, Trash2 } from 'lucide-react';
 
-function localDateStr(m?: number, y?: number) {
-  const now = new Date();
-  const year = y ?? now.getFullYear();
-  const month = m ?? (now.getMonth() + 1);
-  // Eğer seçili ay bu ay ise bugünün gününü kullan, değilse ayın 1'i
-  const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
-  const day = isCurrentMonth ? now.getDate() : 1;
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 export default function ExpensesPage() {
   const { user } = useAuth();
   const now = new Date();
@@ -40,7 +30,6 @@ export default function ExpensesPage() {
     category_id: 0,
     description: '',
     amount: '',
-    expense_date: localDateStr(month, year),
     is_shared: true,
     split_ratio: '50',
   });
@@ -70,11 +59,12 @@ export default function ExpensesPage() {
       category_id: form.category_id,
       description: form.description,
       amount: parseFloat(form.amount),
-      expense_date: form.expense_date,
+      month,
+      year,
       is_shared: form.is_shared,
       split_ratio: parseFloat(form.split_ratio),
     });
-    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', expense_date: localDateStr(month, year), is_shared: true, split_ratio: '50' });
+    setForm({ category_id: categories[0]?.id || 0, description: '', amount: '', is_shared: true, split_ratio: '50' });
     setShowForm(false);
     loadData();
   };
@@ -171,14 +161,10 @@ export default function ExpensesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Tarih</label>
-              <input
-                type="date"
-                value={form.expense_date}
-                onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-500 outline-none"
-                required
-              />
+              <label className="block text-sm font-medium text-slate-600 mb-1">Dönem</label>
+              <div className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
+                {new Date(year, month - 1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -264,8 +250,6 @@ export default function ExpensesPage() {
                     <span>{expense.creator.display_name}</span>
                     <span>-</span>
                     <span>{expense.category.name}</span>
-                    <span>-</span>
-                    <span>{new Date(expense.expense_date).toLocaleDateString('tr-TR')}</span>
                     {!expense.is_shared && <span className="text-orange-500 font-medium">Kişisel</span>}
                     {expense.is_shared && expense.split_ratio !== 50 && (
                       <span className="text-blue-500">%{expense.split_ratio}/%{100 - expense.split_ratio}</span>
