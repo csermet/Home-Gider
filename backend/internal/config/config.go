@@ -27,9 +27,9 @@ func Load() *Config {
 func (c *Config) DSN() string {
 	return "host=" + c.DBHost +
 		" port=" + c.DBPort +
-		" user=" + c.DBUser +
-		" password=" + c.DBPassword +
-		" dbname=" + c.DBName +
+		" user='" + c.DBUser + "'" +
+		" password='" + c.DBPassword + "'" +
+		" dbname='" + c.DBName + "'" +
 		" sslmode=disable"
 }
 
